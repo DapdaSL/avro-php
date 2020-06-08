@@ -229,6 +229,11 @@ class AvroSchema
   const DOC_ATTR = 'doc';
 
   /**
+   * @var string document string attribute name
+   */
+  const LOGICAL_TYPE_ATTR = 'logicalType';
+
+  /**
    * @var array list of primitive schema type names
    */
   private static $primitive_types = array(self::NULL_TYPE, self::BOOLEAN_TYPE,
@@ -1221,6 +1226,7 @@ class AvroRecordSchema extends AvroNamedSchema
       $type = AvroUtil::array_value($field, AvroSchema::TYPE_ATTR);
       $order = AvroUtil::array_value($field, AvroField::ORDER_ATTR);
       $doc = AvroUtil::array_value($field, AvroSchema::DOC_ATTR);
+      $logicalType = AvroUtil::array_value($field, AvroSchema::LOGICAL_TYPE_ATTR);
 
       $default = null;
       $has_default = false;
@@ -1244,7 +1250,7 @@ class AvroRecordSchema extends AvroNamedSchema
         $field_schema = self::subparse($type, $default_namespace, $schemata);
 
       $new_field = new AvroField($name, $field_schema, $is_schema_from_schemata,
-                                 $has_default, $default, $order, $doc);
+                                 $has_default, $default, $order, $doc, $logicalType);
       $field_names []= $name;
       $fields []= $new_field;
     }
@@ -1427,6 +1433,11 @@ class AvroField extends AvroSchema
   private $doc;
 
   /**
+   * @var string logicalType of this field
+   */
+  private $logicalType;
+
+  /**
    * @param string $name
    * @param AvroSchema $schema
    * @param boolean $is_type_from_schemata
@@ -1439,7 +1450,7 @@ class AvroField extends AvroSchema
    * @todo Check validity of $order value
    */
   public function __construct($name, $schema, $is_type_from_schemata,
-                              $has_default, $default, $order=null, $doc=null)
+                              $has_default, $default, $order=null, $doc=null, $logicalType=null)
   {
     if (!AvroName::is_well_formed_name($name))
       throw new AvroSchemaParseException('Field requires a "name" attribute');
@@ -1453,6 +1464,7 @@ class AvroField extends AvroSchema
     $this->check_order_value($order);
     $this->order = $order;
     $this->doc = $doc;
+    $this->logicalType = $logicalType;
   }
 
   /**
@@ -1473,6 +1485,9 @@ class AvroField extends AvroSchema
 
     if ($this->doc)
       $avro[AvroSchema::DOC_ATTR] = $this->doc;
+
+    if ($this->logicalType)
+      $avro[AvroSchema::LOGICAL_TYPE_ATTR] = $this->logicalType;
 
     return $avro;
   }
@@ -1496,4 +1511,9 @@ class AvroField extends AvroSchema
    * @return string the documentation of this field
    */
   public function doc() { return $this->doc; }
+
+  /**
+   * @return string the logical type of this field
+   */
+  public function logical_type() { return $this->logicalType; }
 }
